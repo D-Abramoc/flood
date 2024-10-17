@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Response, Depends
+from fastapi import APIRouter, Response, Depends, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.exceptions import (
     UserAlreadyExistsException, IncorrectEmailOrPasswordException,
@@ -14,8 +16,15 @@ from app.database import get_async_session
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
+templates = Jinja2Templates(directory='app/templates')
 
-@router.post('/register/')
+
+@router.get("/", response_class=HTMLResponse, summary="Страница авторизации")
+async def get_categories(request: Request):
+    return templates.TemplateResponse("auth.html", {"request": request})
+
+
+@router.post('/register')
 async def register_user(
     user_data: SUserRegister,
     session: AsyncSession = Depends(get_async_session)
