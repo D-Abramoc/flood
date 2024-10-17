@@ -10,13 +10,20 @@ from app.api.utils.users import (
     get_password_hash, authenticate_user, create_access_token,
 )
 from app.crud.users import user_crud
-from app.schemas.users import SUserRegister, SUserAuth
+from app.schemas.users import SUserRegister, SUserAuth, SUserRead
 
 from app.database import get_async_session
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
 templates = Jinja2Templates(directory='app/templates')
+
+
+@router.get("/users", response_model=list[SUserRead])
+async def get_users(session: AsyncSession = Depends(get_async_session)):
+    users_all = await user_crud.find_all(session=session)
+    # Используем генераторное выражение для создания списка
+    return [{'id': user.id, 'name': user.name} for user in users_all]
 
 
 @router.get("/", response_class=HTMLResponse, summary="Страница авторизации")

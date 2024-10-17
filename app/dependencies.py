@@ -1,12 +1,14 @@
 from fastapi import Request, HTTPException, status, Depends
 from jose import jwt, JWTError
 from datetime import datetime, timezone
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_auth_data
 from app.exceptions import (
     TokenExpiredException, NoJwtException, NoUserIdException,
     TokenNoFoundException,
 )
 from app.crud.users import user_crud
+from app.database import get_async_session
 
 
 def get_token(request: Request):
@@ -17,7 +19,8 @@ def get_token(request: Request):
     return token
 
 
-async def get_current_user(token: str = Depends(get_token)):
+async def get_current_user(token: str = Depends(get_token),
+                           session: AsyncSession = Depends(get_async_session)):
     try:
         auth_data = get_auth_data()
         payload = jwt.decode(
@@ -35,7 +38,9 @@ async def get_current_user(token: str = Depends(get_token)):
     if not user_id:
         raise NoUserIdException
 
-    user = await user_crud.find_one_or_none_by_id(int(user_id))
+    user = await user_crud.find_one_or_none_by_id(
+        int(user_id), session=session
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found'
