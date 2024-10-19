@@ -75,19 +75,19 @@ async def send_message(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    await message_crud.add(
+    message_data = await message_crud.add(
         session=session,
         sender_id=current_user.id,
         content=message.content,
         recipient_id=message.recipient_id
     )
     message_data = {
-        'sender_id': current_user.id,
-        'recipient_id': message.recipient_id,
-        'content': message.content,
+        'sender_id': message_data.sender_id,
+        'recipient_id': message_data.recipient_id,
+        'content': message_data.content,
     }
-    await notify_user(message.recipient_id, message_data)
-    await notify_user(current_user.id, message_data)
+    await notify_user(message_data['recipient_id'], message_data)
+    await notify_user(message_data['sender_id'], message_data)
     return {
         'recipient_id': message.recipient_id,
         'content': message.content,

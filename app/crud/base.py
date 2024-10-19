@@ -45,4 +45,5 @@ class CRUDBase:
         except SQLAlchemyError as e:
             await session.rollback()
             raise e
+        await session.refresh(new_instance)
         return new_instance
